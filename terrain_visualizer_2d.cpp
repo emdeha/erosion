@@ -76,7 +76,36 @@ void TerrainVisualizer2D::quitSDL() {
 }
 
 SDL_Color TerrainVisualizer2D::getColorForHeight(float height) {
-    // This is a simple color scheme. You can make it more sophisticated if you want.
-    Uint8 intensity = static_cast<Uint8>(height * 255);
-    return SDL_Color{intensity, intensity, intensity, 255};
+    // Define color stops for our gradient
+    const SDL_Color deepWater    = {0, 0, 128, 255};     // Deep blue
+    const SDL_Color shallowWater = {0, 128, 255, 255};   // Light blue
+    const SDL_Color beach        = {240, 240, 64, 255};  // Sand yellow
+    const SDL_Color grass        = {32, 160, 0, 255};    // Green
+    const SDL_Color forest       = {0, 96, 0, 255};      // Dark green
+    const SDL_Color rock         = {96, 96, 96, 255};    // Gray
+    const SDL_Color snow         = {255, 255, 255, 255}; // White
+
+    // Define the thresholds for each terrain type
+    if (height < 0.2f) {
+        return lerpColor(deepWater, shallowWater, height / 0.2f);
+    } else if (height < 0.3f) {
+        return lerpColor(shallowWater, beach, (height - 0.2f) / 0.1f);
+    } else if (height < 0.5f) {
+        return lerpColor(beach, grass, (height - 0.3f) / 0.2f);
+    } else if (height < 0.7f) {
+        return lerpColor(grass, forest, (height - 0.5f) / 0.2f);
+    } else if (height < 0.9f) {
+        return lerpColor(forest, rock, (height - 0.7f) / 0.2f);
+    } else {
+        return lerpColor(rock, snow, (height - 0.9f) / 0.1f);
+    }
+}
+
+SDL_Color TerrainVisualizer2D::lerpColor(const SDL_Color& a, const SDL_Color& b, float t) {
+    return SDL_Color{
+        static_cast<Uint8>(a.r + t * (b.r - a.r)),
+        static_cast<Uint8>(a.g + t * (b.g - a.g)),
+        static_cast<Uint8>(a.b + t * (b.b - a.b)),
+        255
+    };
 }

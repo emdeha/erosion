@@ -24,22 +24,5 @@ int main() {
       std::cerr << "Error in 2D visualization: " << e.what() << std::endl;
     }
 
-/*
-    terrain.generate();
-    std::cout << "Terrain generated with size: " 
-              << terrain.getWidth() << "x" << terrain.getHeight() << std::endl;
-
-    // Visualize the terrain before erosion
-    std::string visualizationBefore = TerrainVisualizer::visualizeASCII(terrain);
-    std::cout << "Terrain Visualization (Before Erosion):\n" << visualizationBefore << std::endl;
-
-    // Apply erosion
-    terrain.erode(1000);  // Adjust the number of iterations as needed
-
-    // Visualize the terrain after erosion
-    std::string visualizationAfter = TerrainVisualizer::visualizeASCII(terrain);
-    std::cout << "Terrain Visualization (After Erosion):\n" << visualizationAfter << std::endl;
-*/
-
     return 0;
 }

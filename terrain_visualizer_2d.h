@@ -20,6 +20,7 @@ private:
     void initSDL();
     void quitSDL();
     SDL_Color getColorForHeight(float height);
+    SDL_Color lerpColor(const SDL_Color& a, const SDL_Color& b, float t);
 };
 
 #endif // TERRAIN_VISUALIZER_2D_H

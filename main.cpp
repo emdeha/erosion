@@ -10,7 +10,7 @@ int main() {
     uint32_t height = 150;
     uint32_t seed = 30449;  // You can change this seed to get different terrains
 
-    auto generator = std::make_unique<PerlinNoiseGenerator>(seed, 1.1, 3);
+    auto generator = std::make_unique<PerlinNoiseGenerator>(seed, 2.1, 6);
     auto erosionSimulator = std::make_unique<ErosionSimulator>(seed);
     Terrain terrain(width, height, std::move(generator), std::move(erosionSimulator));
 

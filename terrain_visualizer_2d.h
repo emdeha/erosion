@@ -10,7 +10,6 @@ public:
     TerrainVisualizer2D(int windowWidth, int windowHeight);
     ~TerrainVisualizer2D();
 
-    void visualize(const Terrain& terrain);
     void animateErosion(Terrain& terrain, std::function<void(Terrain&)> erodeStep, int totalSteps, int fps);
 
 private:
@@ -21,9 +20,9 @@ private:
 
     void initSDL();
     void quitSDL();
-    SDL_Color getColorForHeight(float height);
+    SDL_Color getColorForHeight(float height, float erosionStage);
     SDL_Color lerpColor(const SDL_Color& a, const SDL_Color& b, float t);
-    void drawTerrain(const Terrain& terrain);
+    void drawTerrain(const Terrain& terrain, float erosionStage);
 };
 
 #endif // TERRAIN_VISUALIZER_2D_H

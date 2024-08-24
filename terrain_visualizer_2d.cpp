@@ -11,48 +11,6 @@ TerrainVisualizer2D::~TerrainVisualizer2D() {
     quitSDL();
 }
 
-void TerrainVisualizer2D::visualize(const Terrain& terrain) {
-    SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
-    SDL_RenderClear(m_renderer);
-
-    int terrainWidth = terrain.getWidth();
-    int terrainHeight = terrain.getHeight();
-
-    float scaleX = static_cast<float>(m_windowWidth) / terrainWidth;
-    float scaleY = static_cast<float>(m_windowHeight) / terrainHeight;
-
-    for (int y = 0; y < terrainHeight; ++y) {
-        for (int x = 0; x < terrainWidth; ++x) {
-            float height = terrain.getHeight(x, y);
-            SDL_Color color = getColorForHeight(height);
-            
-            SDL_SetRenderDrawColor(m_renderer, color.r, color.g, color.b, color.a);
-            
-            SDL_Rect rect;
-            rect.x = static_cast<int>(x * scaleX);
-            rect.y = static_cast<int>(y * scaleY);
-            rect.w = static_cast<int>(scaleX) + 1;
-            rect.h = static_cast<int>(scaleY) + 1;
-            
-            SDL_RenderFillRect(m_renderer, &rect);
-        }
-    }
-
-    SDL_RenderPresent(m_renderer);
-
-    // Keep the window open until it's closed
-    SDL_Event event;
-    bool quit = false;
-    while (!quit) {
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) {
-                quit = true;
-            }
-        }
-        SDL_Delay(100);
-    }
-}
-
 void TerrainVisualizer2D::initSDL() {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         throw std::runtime_error("SDL could not initialize! SDL_Error: " + std::string(SDL_GetError()));
@@ -75,29 +33,29 @@ void TerrainVisualizer2D::quitSDL() {
     SDL_Quit();
 }
 
-SDL_Color TerrainVisualizer2D::getColorForHeight(float height) {
-    // Define color stops for our gradient
-    const SDL_Color deepWater    = {0, 0, 128, 255};     // Deep blue
-    const SDL_Color shallowWater = {0, 128, 255, 255};   // Light blue
-    const SDL_Color beach        = {240, 240, 64, 255};  // Sand yellow
-    const SDL_Color grass        = {32, 160, 0, 255};    // Green
-    const SDL_Color forest       = {0, 96, 0, 255};      // Dark green
-    const SDL_Color rock         = {96, 96, 96, 255};    // Gray
-    const SDL_Color snow         = {255, 255, 255, 255}; // White
+SDL_Color TerrainVisualizer2D::getColorForHeight(float height, float erosionStage) {
+    const SDL_Color grass = {34, 139, 34, 255};  // Forest green
+    const SDL_Color dirt = {139, 69, 19, 255};   // Saddle brown
+    const SDL_Color rock = {128, 128, 128, 255}; // Gray
 
-    // Define the thresholds for each terrain type
-    if (height < 0.2f) {
-        return lerpColor(deepWater, shallowWater, height / 0.2f);
-    } else if (height < 0.3f) {
-        return lerpColor(shallowWater, beach, (height - 0.2f) / 0.1f);
-    } else if (height < 0.5f) {
-        return lerpColor(beach, grass, (height - 0.3f) / 0.2f);
-    } else if (height < 0.7f) {
-        return lerpColor(grass, forest, (height - 0.5f) / 0.2f);
-    } else if (height < 0.9f) {
-        return lerpColor(forest, rock, (height - 0.7f) / 0.2f);
+    // Adjust these thresholds to control the distribution of terrain types
+    float grassThreshold = 0.7f - erosionStage * 0.3f; // Grass decreases as erosion progresses
+    float dirtThreshold = 0.3f + erosionStage * 0.4f;  // Dirt increases, then decreases
+
+    if (height > grassThreshold) {
+        return grass;
+    } else if (height > dirtThreshold) {
+        float t = (height - dirtThreshold) / (grassThreshold - dirtThreshold);
+        return lerpColor(dirt, grass, t);
     } else {
-        return lerpColor(rock, snow, (height - 0.9f) / 0.1f);
+        float t = height / dirtThreshold;
+        if (erosionStage > 0.7f) {
+            // In late stages, transition from dirt to rock
+            float rockT = (erosionStage - 0.7f) / 0.3f;
+            return lerpColor(lerpColor(rock, dirt, t), dirt, 1 - rockT);
+        } else {
+            return lerpColor(rock, dirt, t);
+        }
     }
 }
 
@@ -111,7 +69,7 @@ SDL_Color TerrainVisualizer2D::lerpColor(const SDL_Color& a, const SDL_Color& b,
 }
 
 void TerrainVisualizer2D::animateErosion(Terrain& terrain, std::function<void(Terrain&)> erodeStep, int totalSteps, int fps) {
-    int delayMs = 1000 / fps;
+        int delayMs = 1000 / fps;
 
     for (int step = 0; step < totalSteps; ++step) {
         auto start = std::chrono::high_resolution_clock::now();
@@ -120,7 +78,8 @@ void TerrainVisualizer2D::animateErosion(Terrain& terrain, std::function<void(Te
         erodeStep(terrain);
 
         // Draw the terrain
-        drawTerrain(terrain);
+        float erosionStage = static_cast<float>(step) / totalSteps;
+        drawTerrain(terrain, erosionStage);
 
         // Handle events
         SDL_Event event;
@@ -152,8 +111,8 @@ void TerrainVisualizer2D::animateErosion(Terrain& terrain, std::function<void(Te
     }
 }
 
-void TerrainVisualizer2D::drawTerrain(const Terrain& terrain) {
-    SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
+void TerrainVisualizer2D::drawTerrain(const Terrain& terrain, float erosionStage) {
+        SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
     SDL_RenderClear(m_renderer);
 
     int terrainWidth = terrain.getWidth();
@@ -165,7 +124,7 @@ void TerrainVisualizer2D::drawTerrain(const Terrain& terrain) {
     for (int y = 0; y < terrainHeight; ++y) {
         for (int x = 0; x < terrainWidth; ++x) {
             float height = terrain.getHeight(x, y);
-            SDL_Color color = getColorForHeight(height);
+            SDL_Color color = getColorForHeight(height, erosionStage);
             
             SDL_SetRenderDrawColor(m_renderer, color.r, color.g, color.b, color.a);
             

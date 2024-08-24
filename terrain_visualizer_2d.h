@@ -3,6 +3,7 @@
 
 #include <SDL2/SDL.h>
 #include "terrain.h"
+#include <functional>
 
 class TerrainVisualizer2D {
 public:
@@ -10,6 +11,7 @@ public:
     ~TerrainVisualizer2D();
 
     void visualize(const Terrain& terrain);
+    void animateErosion(Terrain& terrain, std::function<void(Terrain&)> erodeStep, int totalSteps, int fps);
 
 private:
     SDL_Window* m_window;
@@ -21,6 +23,7 @@ private:
     void quitSDL();
     SDL_Color getColorForHeight(float height);
     SDL_Color lerpColor(const SDL_Color& a, const SDL_Color& b, float t);
+    void drawTerrain(const Terrain& terrain);
 };
 
 #endif // TERRAIN_VISUALIZER_2D_H

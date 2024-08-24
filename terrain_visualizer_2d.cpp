@@ -109,3 +109,75 @@ SDL_Color TerrainVisualizer2D::lerpColor(const SDL_Color& a, const SDL_Color& b,
         255
     };
 }
+
+void TerrainVisualizer2D::animateErosion(Terrain& terrain, std::function<void(Terrain&)> erodeStep, int totalSteps, int fps) {
+    int delayMs = 1000 / fps;
+
+    for (int step = 0; step < totalSteps; ++step) {
+        auto start = std::chrono::high_resolution_clock::now();
+
+        // Perform erosion step
+        erodeStep(terrain);
+
+        // Draw the terrain
+        drawTerrain(terrain);
+
+        // Handle events
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
+                return;
+            }
+        }
+
+        // Calculate and apply delay
+        auto end = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        int remainingDelay = delayMs - duration.count();
+        if (remainingDelay > 0) {
+            SDL_Delay(remainingDelay);
+        }
+    }
+
+    // Keep the final frame visible until the window is closed
+    SDL_Event event;
+    bool quit = false;
+    while (!quit) {
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
+                quit = true;
+            }
+        }
+        SDL_Delay(100);
+    }
+}
+
+void TerrainVisualizer2D::drawTerrain(const Terrain& terrain) {
+    SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
+    SDL_RenderClear(m_renderer);
+
+    int terrainWidth = terrain.getWidth();
+    int terrainHeight = terrain.getHeight();
+
+    float scaleX = static_cast<float>(m_windowWidth) / terrainWidth;
+    float scaleY = static_cast<float>(m_windowHeight) / terrainHeight;
+
+    for (int y = 0; y < terrainHeight; ++y) {
+        for (int x = 0; x < terrainWidth; ++x) {
+            float height = terrain.getHeight(x, y);
+            SDL_Color color = getColorForHeight(height);
+            
+            SDL_SetRenderDrawColor(m_renderer, color.r, color.g, color.b, color.a);
+            
+            SDL_Rect rect;
+            rect.x = static_cast<int>(x * scaleX);
+            rect.y = static_cast<int>(y * scaleY);
+            rect.w = static_cast<int>(scaleX) + 1;
+            rect.h = static_cast<int>(scaleY) + 1;
+            
+            SDL_RenderFillRect(m_renderer, &rect);
+        }
+    }
+
+    SDL_RenderPresent(m_renderer);
+}

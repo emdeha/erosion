@@ -1,3 +1,0 @@
-/Users/tsvetan/Projects/erosion/build/CMakeFiles/TerrainGenerator.dir
-/Users/tsvetan/Projects/erosion/build/CMakeFiles/edit_cache.dir
-/Users/tsvetan/Projects/erosion/build/CMakeFiles/rebuild_cache.dir

@@ -10,4 +10,5 @@ add_executable(TerrainGenerator
   terrain_visualizer.cpp
   perlin_noise.cpp
   perlin_noise_generator.cpp
+  erosion_simulator.cpp
 )
